@@ -1,10 +1,13 @@
 import "../styles/globals.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faRobot } from "@fortawesome/free-solid-svg-icons";
 
 function MyApp({ Component, pageProps }) {
   return (
     <div className="container">
       <header>
-        <h1>My ChatBot</h1>
+        <FontAwesomeIcon icon={faRobot} />
+        <h1>Study Buddy</h1>
       </header>
       <main>
         <Component {...pageProps} />
