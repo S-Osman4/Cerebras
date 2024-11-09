@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import styles from "../styles/Home.module.css"; // Ensure the path to your CSS file is correct
+import styles from "../styles/Home.module.css"; // Ensure the path is correct
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [showQuickResponses, setShowQuickResponses] = useState(true);
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-  };
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const handleInputChange = (e) => setInput(e.target.value);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -21,54 +21,67 @@ export default function Home() {
     setShowQuickResponses(false);
   };
 
+  const categoryQuickResponses = {
+    Vocabulary: [
+      "Practice test: Vocabulary",
+      "Synonym matching",
+      "Example sentences using N5 words",
+    ],
+    Grammar: [
+      "Simple N5 grammar rule",
+      "Grammar practice test",
+      "Sentence completion",
+    ],
+    Reading: ["Reading comprehension", "Short reading test"],
+    Kanji: [
+      "N5 Kanji practice",
+      "Kanji meaning matching",
+      "Kanji reading practice",
+      "Related kanji pairs",
+    ],
+  };
+
   const sendMessage = async (message) => {
     const trimmedMessage = message.trim();
     if (!trimmedMessage) return;
 
-    setShowQuickResponses(false);
-
-    const newMessage = { id: Date.now(), text: trimmedMessage, sender: "user" };
-    setMessages((messages) => [...messages, newMessage]);
+    setMessages((messages) => [
+      ...messages,
+      { id: Date.now(), text: trimmedMessage, sender: "user" },
+    ]);
     setInput("");
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmedMessage }),
       });
 
       if (response.ok) {
         const { reply } = await response.json();
         const formattedReply = formatText(reply);
-
         setMessages((messages) => [
           ...messages,
           { id: Date.now() + 1, text: formattedReply, sender: "bot" },
         ]);
       } else {
-        console.error(
-          "Error processing the AI response:",
-          await response.text()
-        );
         setMessages((messages) => [
           ...messages,
           {
             id: Date.now() + 1,
-            text: "Sorry, there was an error processing your request.",
+            text: "Sorry, there was an error.",
             sender: "bot",
           },
         ]);
       }
     } catch (error) {
-      console.error("Error processing the AI response:", error);
+      console.error("API error:", error);
       setMessages((messages) => [
         ...messages,
         {
           id: Date.now() + 1,
-          text: "Sorry, there was an error processing your request.",
+          text: "There was a problem reaching the server.",
           sender: "bot",
         },
       ]);
@@ -76,20 +89,13 @@ export default function Home() {
   };
 
   const formatText = (text) => {
-    // Handle headings (e.g., # Heading 1)
-    let formattedText = text.replace(/^# (.*?)$/gm, "<h1>$1</h1>");
-    formattedText = formattedText.replace(/^## (.*?)$/gm, "<h2>$1</h2>");
-    formattedText = formattedText.replace(/^### (.*?)$/gm, "<h3>$1</h3>");
+    let formattedText = text
+      .replace(/^# (.*?)$/gm, "<h1>$1</h1>")
+      .replace(/^## (.*?)$/gm, "<h2>$1</h2>")
+      .replace(/^### (.*?)$/gm, "<h3>$1</h3>")
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/^\* (.*?)$/gm, "<li>$1</li>");
 
-    // Handle bold text (e.g., **bold text**)
-    formattedText = formattedText.replace(
-      /\*\*(.*?)\*\*/g,
-      "<strong>$1</strong>"
-    );
-
-    // Handle bullet points (e.g., * item)
-    formattedText = formattedText.replace(/^\* (.*?)$/gm, "<li>$1</li>");
-    // Wrap list items in <ul> tags if there are any <li> elements
     if (formattedText.includes("<li>")) {
       formattedText = formattedText.replace(
         /(<li>.*?<\/li>)/gms,
@@ -97,57 +103,51 @@ export default function Home() {
       );
     }
 
-    // Handle inline code (e.g., `code`)
-    formattedText = formattedText.replace(/`(.*?)`/g, "<code>$1</code>");
-
-    // Handle line breaks (e.g., <br> after each new line)
-    formattedText = formattedText.replace(/\n/g, "<br>");
-
+    formattedText = formattedText
+      .replace(/`(.*?)`/g, "<code>$1</code>")
+      .replace(/\n/g, "<br>");
     return formattedText;
   };
 
   const renderMessage = (msg) => {
-    if (msg.sender === "bot") {
-      return (
-        <p
-          key={msg.id}
-          className={styles.botMessage}
-          dangerouslySetInnerHTML={{ __html: msg.text }}
-        ></p>
-      );
-    } else {
-      return (
-        <p key={msg.id} className={styles.userMessage}>
-          {msg.text}
-        </p>
-      );
-    }
+    return msg.sender === "bot" ? (
+      <p
+        key={msg.id}
+        className={styles.botMessage}
+        dangerouslySetInnerHTML={{ __html: msg.text }}
+      ></p>
+    ) : (
+      <p key={msg.id} className={styles.userMessage}>
+        {msg.text}
+      </p>
+    );
   };
+
   return (
     <div className={styles.container}>
       <div className={styles.chatArea}>
         {messages.map((msg) => renderMessage(msg))}
-        {showQuickResponses && (
+        {showQuickResponses && !selectedCategory && (
           <div className={styles.quickResponses}>
-            <button
-              onClick={() =>
-                quickResponse("Can you give me some N5 vocabulary?")
-              }
-            >
-              N5 Daily Vocabulary
+            <button onClick={() => setSelectedCategory("Vocabulary")}>
+              Vocabulary
             </button>
-            <button
-              onClick={() => quickResponse("Explain a simple N5 grammar rule.")}
-            >
-              N5 Grammar
+            <button onClick={() => setSelectedCategory("Grammar")}>
+              Grammar
             </button>
-            <button
-              onClick={() =>
-                quickResponse("Give me an example sentence for N5.")
-              }
-            >
-              N5 Example Sentence
+            <button onClick={() => setSelectedCategory("Reading")}>
+              Reading
             </button>
+            <button onClick={() => setSelectedCategory("Kanji")}>Kanji</button>
+          </div>
+        )}
+        {showQuickResponses && selectedCategory && (
+          <div className={styles.quickResponses}>
+            {categoryQuickResponses[selectedCategory].map((text) => (
+              <button key={text} onClick={() => quickResponse(text)}>
+                {text}
+              </button>
+            ))}
           </div>
         )}
       </div>

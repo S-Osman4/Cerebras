@@ -88,20 +88,20 @@
   font-size: 16px;
   cursor: pointer;
   transition: transform 0.2s ease-in-out, box-shadow 0.3s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 10px 5px #ffbdbd;
   font-family: "Roboto", sans-serif;
 }
 
 .quickResponses button:hover {
   background-color: #8ea7e9;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-  transform: translateY(-2px);
+  box-shadow: 0 2px #7d3ca3;
+  transform: translateY(4px);
 }
 
 .quickResponses button:active {
   background-color: #7286d3;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transform: translateY(2px);
+  box-shadow: 0 2px #7d3ca3;
+  transform: translateY(4px);
 }
 
 .botMessage {
@@ -147,7 +147,7 @@
 
 @media (max-width: 767px) {
   .chatArea {
-    height: 45vh;
+    height: 55vh;
     padding: 15px;
   }
 
