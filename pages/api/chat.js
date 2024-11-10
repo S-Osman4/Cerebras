@@ -126,12 +126,10 @@ export default async function handler(req, res) {
       const completion = await client.chat.completions.create(completionParams);
       let response = completion.choices[0].message.content;
 
-      // The regex replacement might not be needed anymore since we're changing the format
-      // but keeping it just in case
       response = response.replace(
-        /([\u4E00-\u9FFF]+)\((.*?)\)/g, // Matches Kanji(furigana) pattern
+        /([\u4E00-\u9FFF]+)\((.*?)\)/g,
         (match, kanji, furigana) => {
-          return `${kanji}(${furigana})`; // Ensure correct Kanji(furigana) format
+          return `${kanji}(${furigana})`;
         }
       );
 
